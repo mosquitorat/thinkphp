@@ -105,7 +105,7 @@ class Think {
         foreach ($list as $file){
             if(is_file($file))  {
                 require_cache($file);
-                if(!APP_DEBUG)   $compile .= compile($file);
+                if(!SYSTEM_DEBUG)   $compile .= compile($file);
             }
         }
 
@@ -113,24 +113,24 @@ class Think {
         if(is_file(COMMON_PATH.'common.php')) {
             include COMMON_PATH.'common.php';
             // 编译文件
-            if(!APP_DEBUG)  $compile   .= compile(COMMON_PATH.'common.php');
+            if(!SYSTEM_DEBUG)  $compile   .= compile(COMMON_PATH.'common.php');
         }
 
         // 加载模式别名定义
         if(isset($mode['alias'])) {
             $alias = is_array($mode['alias'])?$mode['alias']:include $mode['alias'];
             alias_import($alias);
-            if(!APP_DEBUG) $compile .= 'alias_import('.var_export($alias,true).');';               
+            if(!SYSTEM_DEBUG) $compile .= 'alias_import('.var_export($alias,true).');';               
         }
      
         // 加载项目别名定义
         if(is_file(CONF_PATH.'alias.php')){ 
             $alias = include CONF_PATH.'alias.php';
             alias_import($alias);
-            if(!APP_DEBUG) $compile .= 'alias_import('.var_export($alias,true).');';
+            if(!SYSTEM_DEBUG) $compile .= 'alias_import('.var_export($alias,true).');';
         }
 
-        if(APP_DEBUG) {
+        if(SYSTEM_DEBUG) {
             // 调试模式加载系统默认的配置文件
             C(include THINK_PATH.'Conf/debug.php');
             // 读取调试模式的应用状态

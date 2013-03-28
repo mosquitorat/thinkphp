@@ -33,7 +33,7 @@ define('IS_WIN',strstr(PHP_OS, 'WIN') ? 1 : 0 );
 define('IS_CLI',PHP_SAPI=='cli'? 1   :   0);
 
 // 项目名称
-defined('APP_NAME') or define('APP_NAME', basename(dirname($_SERVER['SCRIPT_FILENAME'])));
+defined('SYSTEM_NAME') or define('SYSTEM_NAME', basename(dirname($_SERVER['SCRIPT_FILENAME'])));
 
 if(!IS_CLI) {
     // 当前文件名
@@ -48,7 +48,7 @@ if(!IS_CLI) {
     }
     if(!defined('__ROOT__')) {
         // 网站URL根目录
-        if( strtoupper(APP_NAME) == strtoupper(basename(dirname(_PHP_FILE_))) ) {
+        if( strtoupper(SYSTEM_NAME) == strtoupper(basename(dirname(_PHP_FILE_))) ) {
             $_root = dirname(dirname(_PHP_FILE_));
         }else {
             $_root = dirname(_PHP_FILE_);
@@ -70,12 +70,12 @@ defined('MODE_PATH')    or define('MODE_PATH',      EXTEND_PATH.'Mode/'); // 模
 defined('ENGINE_PATH')  or define('ENGINE_PATH',    EXTEND_PATH.'Engine/'); // 引擎扩展目录
 defined('VENDOR_PATH')  or define('VENDOR_PATH',    EXTEND_PATH.'Vendor/'); // 第三方类库目录
 defined('LIBRARY_PATH') or define('LIBRARY_PATH',   EXTEND_PATH.'Library/'); // 扩展类库目录
-defined('COMMON_PATH')  or define('COMMON_PATH',    APP_PATH.'Common/'); // 项目公共目录
-defined('LIB_PATH')     or define('LIB_PATH',       APP_PATH.'Lib/'); // 项目类库目录
-defined('CONF_PATH')    or define('CONF_PATH',      APP_PATH.'Conf/'); // 项目配置目录
-defined('LANG_PATH')    or define('LANG_PATH',      APP_PATH.'Lang/'); // 项目语言包目录
-defined('TMPL_PATH')    or define('TMPL_PATH',      APP_PATH.'Tpl/'); // 项目模板目录
-defined('HTML_PATH')    or define('HTML_PATH',      APP_PATH.'Html/'); // 项目静态目录
+defined('COMMON_PATH')  or define('COMMON_PATH',    SYSTEM_PATH.'Common/'); // 项目公共目录
+defined('LIB_PATH')     or define('LIB_PATH',       SYSTEM_PATH.'Lib/'); // 项目类库目录
+defined('CONF_PATH')    or define('CONF_PATH',      SYSTEM_PATH.'Conf/'); // 项目配置目录
+defined('LANG_PATH')    or define('LANG_PATH',      SYSTEM_PATH.'Lang/'); // 项目语言包目录
+defined('TMPL_PATH')    or define('TMPL_PATH',      SYSTEM_PATH.'Tpl/'); // 项目模板目录
+defined('HTML_PATH')    or define('HTML_PATH',      SYSTEM_PATH.'Html/'); // 项目静态目录
 defined('LOG_PATH')     or define('LOG_PATH',       RUNTIME_PATH.'Logs/'); // 项目日志目录
 defined('TEMP_PATH')    or define('TEMP_PATH',      RUNTIME_PATH.'Temp/'); // 项目缓存目录
 defined('DATA_PATH')    or define('DATA_PATH',      RUNTIME_PATH.'Data/'); // 项目数据目录
@@ -108,7 +108,7 @@ function load_runtime_file() {
     }elseif(!is_dir(CACHE_PATH)){
         // 检查缓存目录
         check_runtime();
-    }elseif(APP_DEBUG){
+    }elseif(SYSTEM_DEBUG){
         // 调试模式切换删除编译缓存
         if(is_file(RUNTIME_FILE))   unlink(RUNTIME_FILE);
     }
@@ -176,8 +176,8 @@ function build_tags_cache() {
 // 创建项目目录结构
 function build_app_dir() {
     // 没有创建项目目录的话自动创建
-    if(!is_dir(APP_PATH)) mkdir(APP_PATH,0755,true);
-    if(is_writeable(APP_PATH)) {
+    if(!is_dir(SYSTEM_PATH)) mkdir(SYSTEM_PATH,0755,true);
+    if(is_writeable(SYSTEM_PATH)) {
         $dirs  = array(
             LIB_PATH,
             RUNTIME_PATH,

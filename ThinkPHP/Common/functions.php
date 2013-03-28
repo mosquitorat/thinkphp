@@ -23,7 +23,7 @@
  */
 function halt($error) {
     $e = array();
-    if (APP_DEBUG) {
+    if (SYSTEM_DEBUG) {
         //调试模式下输出错误信息
         if (!is_array($error)) {
             $trace          = debug_backtrace();
@@ -117,7 +117,7 @@ function dump($var, $echo=true, $label=null, $strict=true) {
  * @return void
  */
 function _404($msg='',$url='') {
-    APP_DEBUG && throw_exception($msg);
+    SYSTEM_DEBUG && throw_exception($msg);
     if($msg && C('LOG_EXCEPTION_RECORD')) Log::write($msg);
     if(empty($url) && C('URL_404_REDIRECT')) {
         $url    =   C('URL_404_REDIRECT');

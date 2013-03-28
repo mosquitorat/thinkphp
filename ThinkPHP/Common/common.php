@@ -163,7 +163,7 @@ function import($class, $baseUrl = '', $ext='.class.php') {
     $class_strut     = explode('/', $class);
     if (empty($baseUrl)) {
         $libPath    =   defined('BASE_LIB_PATH')?BASE_LIB_PATH:LIB_PATH;
-        if ('@' == $class_strut[0] || APP_NAME == $class_strut[0]) {
+        if ('@' == $class_strut[0] || SYSTEM_NAME == $class_strut[0]) {
             //加载当前项目应用类库
             $baseUrl = dirname($libPath);
             $class   = substr_replace($class, basename($libPath).'/', 0, strlen($class_strut[0]) + 1);
@@ -175,7 +175,7 @@ function import($class, $baseUrl = '', $ext='.class.php') {
             $baseUrl = LIBRARY_PATH;
         }else { // 加载其他项目应用类库
             $class   = substr_replace($class, '', 0, strlen($class_strut[0]) + 1);
-            $baseUrl = APP_PATH . '../' . $class_strut[0] . '/'.basename($libPath).'/';
+            $baseUrl = SYSTEM_PATH . '../' . $class_strut[0] . '/'.basename($libPath).'/';
         }
     }
     if (substr($baseUrl, -1) != '/')
@@ -266,7 +266,7 @@ function D($name='',$layer='') {
     if(isset($_model[$name]))   return $_model[$name];
     $path           =   explode('/',$name);
     if(count($path)>3 && 1 == C('APP_GROUP_MODE')) { // 独立分组
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : APP_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
+        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }else{
         import($name.$layer);
@@ -319,7 +319,7 @@ function A($name,$layer='',$common=false) {
     if(isset($_action[$name]))  return $_action[$name];
     $path           =   explode('/',$name);
     if(count($path)>3 && 1 == C('APP_GROUP_MODE')) { // 独立分组
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : APP_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
+        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }elseif($common) { // 加载公共类库目录
         import(str_replace('@/','',$name).$layer,LIB_PATH);
@@ -448,7 +448,7 @@ function tag($tag, &$params=NULL) {
         $tags = $extends;
     }
     if($tags) {
-        if(APP_DEBUG) {
+        if(SYSTEM_DEBUG) {
             G($tag.'Start');
             trace('[ '.$tag.' ] --START--','','INFO');
         }
@@ -459,7 +459,7 @@ function tag($tag, &$params=NULL) {
             }
             B($name, $params);
         }
-        if(APP_DEBUG) { // 记录行为的执行日志
+        if(SYSTEM_DEBUG) { // 记录行为的执行日志
             trace('[ '.$tag.' ] --END-- [ RunTime:'.G($tag.'Start',$tag.'End',6).'s ]','','INFO');
         }
     }else{ // 未执行任何行为 返回false
@@ -495,12 +495,12 @@ function add_tag_behavior($tag,$behavior,$path='') {
  */
 function B($name, &$params=NULL) {
     $class      = $name.'Behavior';
-    if(APP_DEBUG) {
+    if(SYSTEM_DEBUG) {
         G('behaviorStart');
     }
     $behavior   = new $class();
     $behavior->run($params);
-    if(APP_DEBUG) { // 记录行为的执行日志
+    if(SYSTEM_DEBUG) { // 记录行为的执行日志
         G('behaviorEnd');
         trace('Run '.$name.' Behavior [ RunTime:'.G('behaviorStart','behaviorEnd',6).'s ]','','INFO');
     }
