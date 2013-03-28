@@ -176,10 +176,10 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
         $domain = $host.(strpos($host,'.')?'':strstr($_SERVER['HTTP_HOST'],'.'));
     }elseif($domain===true){
         $domain = $_SERVER['HTTP_HOST'];
-        if(C('APP_SUB_DOMAIN_DEPLOY') ) { // 开启子域名部署
+        if(C('SYSTEM_SUB_DOMAIN_DEPLOY') ) { // 开启子域名部署
             $domain = $domain=='localhost'?'localhost':'www'.strstr($_SERVER['HTTP_HOST'],'.');
             // '子域名'=>array('项目[/分组]');
-            foreach (C('APP_SUB_DOMAIN_RULES') as $key => $rule) {
+            foreach (C('SYSTEM_SUB_DOMAIN_RULES') as $key => $rule) {
                 if(false === strpos($key,'*') && 0=== strpos($url,$rule[0])) {
                     $domain = $key.strstr($domain,'.'); // 生成对应子域名
                     $url    =  substr_replace($url,'',0,strlen($rule[0]));
@@ -235,7 +235,7 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
             if(C('URL_CASE_INSENSITIVE')) {
                 $var[C('VAR_MODULE')]   =   parse_name($var[C('VAR_MODULE')]);
             }
-            if(!C('APP_SUB_DOMAIN_DEPLOY') && C('APP_GROUP_LIST')) {
+            if(!C('SYSTEM_SUB_DOMAIN_DEPLOY') && C('SYSTEM_APP_LIST')) {
                 if(!empty($path)) {
                     $group                  =   array_pop($path);
                     $var[C('VAR_GROUP')]    =   $group;
@@ -252,16 +252,16 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
     }
 
     if(C('URL_MODEL') == 0) { // 普通模式URL转换
-        $url        =   __APP__.'?'.http_build_query(array_reverse($var));
+        $url        =   __SYSTEM__.'?'.http_build_query(array_reverse($var));
         if(!empty($vars)) {
             $vars   =   urldecode(http_build_query($vars));
             $url   .=   '&'.$vars;
         }
     }else{ // PATHINFO模式或者兼容URL模式
         if(isset($route)) {
-            $url    =   __APP__.'/'.rtrim($url,$depr);
+            $url    =   __SYSTEM__.'/'.rtrim($url,$depr);
         }else{
-            $url    =   __APP__.'/'.implode($depr,array_reverse($var));
+            $url    =   __SYSTEM__.'/'.implode($depr,array_reverse($var));
         }
         if(!empty($vars)) { // 添加参数
             foreach ($vars as $var => $val){
@@ -700,6 +700,7 @@ function load_ext_file() {
     }
     // 加载自定义的动态配置文件
     if(C('LOAD_EXT_CONFIG')) {
+	
         $configs    =  C('LOAD_EXT_CONFIG');
         if(is_string($configs)) $configs =  explode(',',$configs);
         foreach ($configs as $key=>$config){

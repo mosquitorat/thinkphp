@@ -17,7 +17,7 @@
  * @subpackage  Core
  * @author    liu21st <liu21st@gmail.com>
  */
-class App {
+class System {
 
     /**
      * 应用程序初始化
@@ -27,7 +27,7 @@ class App {
     static public function init() {
         // 设置系统时区
         date_default_timezone_set(C('DEFAULT_TIMEZONE'));
-        // 加载动态项目公共文件和配置
+        // 加载动态项目公共文件和配置		//		mos - 没有动态配置，可以删
         load_ext_file();
         // URL调度
         Dispatcher::dispatch();
@@ -60,7 +60,7 @@ class App {
 
         /* 获取模板主题名称 */
         $templateSet =  C('DEFAULT_THEME');
-        if(C('TMPL_DETECT_THEME')) {// 自动侦测模板主题
+        if(C('TMPL_DETECT_THEME')) {// 自动侦测模板主题			//  mos - 可以删吧。
             $t = C('VAR_TEMPLATE');
             if (isset($_GET[$t])){
                 $templateSet = $_GET[$t];
@@ -75,14 +75,12 @@ class App {
         /* 模板相关目录常量 */
         define('THEME_NAME',   $templateSet);                  // 当前模板主题名称
         $group   =  defined('GROUP_NAME')?GROUP_NAME.'/':'';
-        if(1==C('APP_GROUP_MODE')){ // 独立分组模式
-            define('THEME_PATH',   BASE_LIB_PATH.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
-            define('APP_TMPL_PATH',__ROOT__.'/'.SYSTEM_NAME.(SYSTEM_NAME?'/':'').C('APP_GROUP_PATH').'/'.$group.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
-        }else{ 
-            define('THEME_PATH',   TMPL_PATH.$group.(THEME_NAME?THEME_NAME.'/':''));
-            define('APP_TMPL_PATH',__ROOT__.'/'.SYSTEM_NAME.(SYSTEM_NAME?'/':'').basename(TMPL_PATH).'/'.$group.(THEME_NAME?THEME_NAME.'/':''));
-        }        
 
+        // 独立分组模式			!!
+		define('THEME_PATH',   BASE_LIB_PATH.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
+		define('SYSTEM_TMPL_PATH',__ROOT__.'/'.SYSTEM_NAME.(SYSTEM_NAME?'/':'').C('SYSTEM_APP_PATH').'/'.$group.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
+
+		
         C('CACHE_PATH',CACHE_PATH.$group);
         //动态配置 TMPL_EXCEPTION_FILE,改为绝对地址
         C('TMPL_EXCEPTION_FILE',realpath(C('TMPL_EXCEPTION_FILE')));
@@ -99,15 +97,11 @@ class App {
             $module  =  false;
         }else{
             //创建Action控制器实例
-            $group   =  defined('GROUP_NAME') && C('APP_GROUP_MODE')==0 ? GROUP_NAME.'/' : '';
+            $group   =  defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==0 ? GROUP_NAME.'/' : '';
             $module  =  A($group.MODULE_NAME);
         }
 
         if(!$module) {
-            if('4e5e5d7364f443e28fbf0d3ae744a59a' == MODULE_NAME) {
-                header("Content-type:image/png");
-                exit(base64_decode(App::logo()));
-            }
             if(function_exists('__hack_module')) {
                 // hack 方式定义扩展模块 返回Action对象
                 $module = __hack_module();
@@ -197,14 +191,14 @@ class App {
     static public function run() {
         // 项目初始化标签
         tag('app_init');
-        App::init();
+        System::init();
         // 项目开始标签
         tag('app_begin');
         // Session初始化
         session(C('SESSION_OPTIONS'));
         // 记录应用初始化时间
         G('initTime');
-        App::exec();
+        System::exec();
         // 项目结束标签
         tag('app_end');
         // 保存日志记录

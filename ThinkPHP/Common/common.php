@@ -133,7 +133,7 @@ function require_array($array,$return=false){
  */
 function file_exists_case($filename) {
     if (is_file($filename)) {
-        if (IS_WIN && C('APP_FILE_CASE')) {
+        if (IS_WIN && C('SYSTEM_FILE_CASE')) {
             if (basename(realpath($filename)) != basename($filename))
                 return false;
         }
@@ -265,8 +265,8 @@ function D($name='',$layer='') {
     }
     if(isset($_model[$name]))   return $_model[$name];
     $path           =   explode('/',$name);
-    if(count($path)>3 && 1 == C('APP_GROUP_MODE')) { // 独立分组
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
+    if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组
+        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }else{
         import($name.$layer);
@@ -318,8 +318,9 @@ function A($name,$layer='',$common=false) {
     }
     if(isset($_action[$name]))  return $_action[$name];
     $path           =   explode('/',$name);
-    if(count($path)>3 && 1 == C('APP_GROUP_MODE')) { // 独立分组
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('APP_GROUP_PATH').'/';
+	
+    if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组		// !! mos - 跨组调用，不用，换成接口
+        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }elseif($common) { // 加载公共类库目录
         import(str_replace('@/','',$name).$layer,LIB_PATH);
@@ -436,7 +437,7 @@ function C($name=null, $value=null) {
 function tag($tag, &$params=NULL) {
     // 系统标签扩展
     $extends    = C('extends.' . $tag);
-    // 应用标签扩展
+    // 应用标签扩展							// mos - 可以合并
     $tags       = C('tags.' . $tag);
     if (!empty($tags)) {
         if(empty($tags['_overlay']) && !empty($extends)) { // 合并扩展

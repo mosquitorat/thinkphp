@@ -36,7 +36,7 @@ class Think {
         Think::buildApp();         // 预编译项目
         //[/RUNTIME]
         // 运行应用
-        App::run();
+        System::run();
         return ;
     }
 
@@ -48,18 +48,11 @@ class Think {
      */
     static private function buildApp() {
         
-        // 读取运行模式
-        if(defined('MODE_NAME')) { // 读取模式的设置
-            $mode   = include MODE_PATH.strtolower(MODE_NAME).'.php';
-        }else{
-            $mode   =  array();
-        }
+        $mode   =  array();
+		
         // 加载核心惯例配置文件
         C(include THINK_PATH.'Conf/convention.php');
-        if(isset($mode['config'])) {// 加载模式配置文件
-            C( is_array($mode['config'])?$mode['config']:include $mode['config'] );
-        }
-
+        
         // 加载项目配置文件
         if(is_file(CONF_PATH.'config.php'))
             C(include CONF_PATH.'config.php');
@@ -67,8 +60,8 @@ class Think {
         // 加载框架底层语言包
         L(include THINK_PATH.'Lang/'.strtolower(C('DEFAULT_LANG')).'.php');
 
-        // 加载模式系统行为定义
-        if(C('APP_TAGS_ON')) {
+        // 加载模式系统行为定义		// mos - 可以删
+        if(C('SYSTEM_TAGS_ON')) {
             if(isset($mode['extends'])) {
                 C('extends',is_array($mode['extends'])?$mode['extends']:include $mode['extends']);
             }else{ // 默认加载系统行为扩展定义
@@ -76,28 +69,22 @@ class Think {
             }
         }
 
-        // 加载应用行为定义
-        if(isset($mode['tags'])) {
-            C('tags', is_array($mode['tags'])?$mode['tags']:include $mode['tags']);
-        }elseif(is_file(CONF_PATH.'tags.php')){
-            // 默认加载项目配置目录的tags文件定义
-            C('tags', include CONF_PATH.'tags.php');
-        }
+        // 默认加载项目配置目录的tags文件定义
+        C('tags', include CONF_PATH.'tags.php');
 
         $compile   = '';
-        // 读取核心编译文件列表
-        if(isset($mode['core'])) {
-            $list  =  $mode['core'];
-        }else{
-            $list  =  array(
-                THINK_PATH.'Common/functions.php', // 标准模式函数库
-                CORE_PATH.'Core/Log.class.php',    // 日志处理类
-                CORE_PATH.'Core/Dispatcher.class.php', // URL调度类
-                CORE_PATH.'Core/App.class.php',   // 应用程序类
-                CORE_PATH.'Core/Action.class.php', // 控制器类
-                CORE_PATH.'Core/View.class.php',  // 视图类
-            );
-        }
+        
+		// 读取核心编译文件列表
+        
+		$list  =  array(
+			THINK_PATH.'Common/functions.php', // 标准模式函数库
+			CORE_PATH.'Core/Log.class.php',    // 日志处理类
+			CORE_PATH.'Core/Dispatcher.class.php', // URL调度类
+			CORE_PATH.'Core/System.class.php',   // 应用程序类
+			CORE_PATH.'Core/Action.class.php', // 控制器类
+			CORE_PATH.'Core/View.class.php',  // 视图类
+		);
+        
         // 项目追加核心编译列表文件
         if(is_file(CONF_PATH.'core.php')) {
             $list  =  array_merge($list,include CONF_PATH.'core.php');
@@ -116,12 +103,6 @@ class Think {
             if(!SYSTEM_DEBUG)  $compile   .= compile(COMMON_PATH.'common.php');
         }
 
-        // 加载模式别名定义
-        if(isset($mode['alias'])) {
-            $alias = is_array($mode['alias'])?$mode['alias']:include $mode['alias'];
-            alias_import($alias);
-            if(!SYSTEM_DEBUG) $compile .= 'alias_import('.var_export($alias,true).');';               
-        }
      
         // 加载项目别名定义
         if(is_file(CONF_PATH.'alias.php')){ 
@@ -134,7 +115,7 @@ class Think {
             // 调试模式加载系统默认的配置文件
             C(include THINK_PATH.'Conf/debug.php');
             // 读取调试模式的应用状态
-            $status  =  C('APP_STATUS');
+            $status  =  C('SYSTEM_STATUS');
             // 加载对应的项目配置文件
             if(is_file(CONF_PATH.$status.'.php'))
                 // 允许项目增加开发模式配置定义
@@ -157,7 +138,7 @@ class Think {
         // 检查是否存在别名定义
         if(alias_import($class)) return ;
         $libPath    =   defined('BASE_LIB_PATH')?BASE_LIB_PATH:LIB_PATH;
-        $group      =   defined('GROUP_NAME') && C('APP_GROUP_MODE')==0 ?GROUP_NAME.'/':'';
+        $group      =   defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==0 ?GROUP_NAME.'/':'';
         $file       =   $class.'.class.php';
         if(substr($class,-8)=='Behavior') { // 加载行为
             if(require_array(array(
@@ -209,7 +190,7 @@ class Think {
         }
 
         // 根据自动加载路径设置进行尝试搜索
-        $paths  =   explode(',',C('APP_AUTOLOAD_PATH'));
+        $paths  =   explode(',',C('SYSTEM_AUTOLOAD_PATH'));
         foreach ($paths as $path){
             if(import($path.'.'.$class))
                 // 如果加载类成功则返回

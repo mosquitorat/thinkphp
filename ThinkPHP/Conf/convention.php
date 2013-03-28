@@ -22,16 +22,16 @@
 defined('THINK_PATH') or exit();
 return  array(
     /* 项目设定 */
-    'APP_STATUS'            => 'debug',  // 应用调试模式状态 调试模式开启后有效 默认为debug 可扩展 并自动加载对应的配置文件
-    'APP_FILE_CASE'         => false,   // 是否检查文件的大小写 对Windows平台有效
-    'APP_AUTOLOAD_PATH'     => '',// 自动加载机制的自动搜索路径,注意搜索顺序
-    'APP_TAGS_ON'           => true, // 系统标签扩展开关
-    'APP_SUB_DOMAIN_DEPLOY' => false,   // 是否开启子域名部署
-    'APP_SUB_DOMAIN_RULES'  => array(), // 子域名部署规则
-    'APP_SUB_DOMAIN_DENY'   => array(), //  子域名禁用列表
-    'APP_GROUP_LIST'        => '',      // 项目分组设定,多个组之间用逗号分隔,例如'Home,Admin'
-    'APP_GROUP_MODE'        =>  0,  // 分组模式 0 普通分组 1 独立分组
-    'APP_GROUP_PATH'        =>  'Modules', // 分组目录 独立分组模式下面有效
+    'SYSTEM_STATUS'            => 'debug',  // 应用调试模式状态 调试模式开启后有效 默认为debug 可扩展 并自动加载对应的配置文件
+    'SYSTEM_FILE_CASE'         => false,   // 是否检查文件的大小写 对Windows平台有效
+    'SYSTEM_AUTOLOAD_PATH'     => '',// 自动加载机制的自动搜索路径,注意搜索顺序
+    'SYSTEM_TAGS_ON'           => true, // 系统标签扩展开关
+    'SYSTEM_SUB_DOMAIN_DEPLOY' => false,   // 是否开启子域名部署
+    'SYSTEM_SUB_DOMAIN_RULES'  => array(), // 子域名部署规则
+    'SYSTEM_SUB_DOMAIN_DENY'   => array(), //  子域名禁用列表
+    'SYSTEM_APP_LIST'        => '',      // 项目分组设定,多个组之间用逗号分隔,例如'Home,Admin'
+    'SYSTEM_APP_MODE'        =>  1,  // 分组模式 0 普通分组 1 独立分组      mos - 整理后，可删除
+    'SYSTEM_APP_PATH'        =>  'Modules', // 分组目录 独立分组模式下面有效
     'ACTION_SUFFIX'         =>  '', // 操作方法后缀
 
     /* Cookie设置 */

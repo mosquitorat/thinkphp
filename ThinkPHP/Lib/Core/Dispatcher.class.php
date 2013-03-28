@@ -45,14 +45,15 @@ class Dispatcher {
         }
 
         // 开启子域名部署
-        if(C('APP_SUB_DOMAIN_DEPLOY')) {
-            $rules      = C('APP_SUB_DOMAIN_RULES');
+		/*										mos - 没有子域名
+        if(C('SYSTEM_SUB_DOMAIN_DEPLOY')) {
+            $rules      = C('SYSTEM_SUB_DOMAIN_RULES');
             $subDomain  = strtolower(substr($_SERVER['HTTP_HOST'],0,strpos($_SERVER['HTTP_HOST'],'.')));
             define('SUB_DOMAIN',$subDomain); // 二级域名定义
             if($subDomain && isset($rules[$subDomain])) {
                 $rule =  $rules[$subDomain];
             }elseif(isset($rules['*'])){ // 泛域名支持
-                if('www' != $subDomain && !in_array($subDomain,C('APP_SUB_DOMAIN_DENY'))) {
+                if('www' != $subDomain && !in_array($subDomain,C('SYSTEM_SUB_DOMAIN_DENY'))) {
                     $rule =  $rules['*'];
                 }
             }
@@ -74,6 +75,7 @@ class Dispatcher {
                 }
             }
         }
+		*/
         // 分析PATHINFO信息
         if(empty($_SERVER['PATH_INFO'])) {
             $types   =  explode(',',C('URL_PATHINFO_FETCH'));
@@ -105,9 +107,9 @@ class Dispatcher {
                     $_GET[C('VAR_URL_PARAMS')]   =  $paths;
                 }
                 $var  =  array();
-                if (C('APP_GROUP_LIST') && !isset($_GET[C('VAR_GROUP')])){
-                    $var[C('VAR_GROUP')] = in_array(strtolower($paths[0]),explode(',',strtolower(C('APP_GROUP_LIST'))))? array_shift($paths) : '';
-                    if(C('APP_GROUP_DENY') && in_array(strtolower($var[C('VAR_GROUP')]),explode(',',strtolower(C('APP_GROUP_DENY'))))) {
+                if (C('SYSTEM_APP_LIST') && !isset($_GET[C('VAR_GROUP')])){
+                    $var[C('VAR_GROUP')] = in_array(strtolower($paths[0]),explode(',',strtolower(C('SYSTEM_APP_LIST'))))? array_shift($paths) : '';
+                    if(C('SYSTEM_GROUP_DENY') && in_array(strtolower($var[C('VAR_GROUP')]),explode(',',strtolower(C('SYSTEM_GROUP_DENY'))))) {
                         // 禁止直接访问分组
                         exit;
                     }
@@ -128,25 +130,24 @@ class Dispatcher {
         // URL常量
         define('__SELF__',strip_tags($_SERVER['REQUEST_URI']));
         // 当前项目地址
-        define('__APP__',strip_tags(PHP_FILE));
+        define('__SYSTEM__',strip_tags(PHP_FILE));
 
         // 获取分组 模块和操作名称
-        if (C('APP_GROUP_LIST')) {
+        if (C('SYSTEM_APP_LIST')) {
             define('GROUP_NAME', self::getGroup(C('VAR_GROUP')));
             // 分组URL地址
-            define('__GROUP__',(!empty($domainGroup) || strtolower(GROUP_NAME) == strtolower(C('DEFAULT_GROUP')) )?__APP__ : __APP__.'/'.GROUP_NAME);
+            define('__GROUP__',(!empty($domainGroup) || strtolower(GROUP_NAME) == strtolower(C('DEFAULT_GROUP')) )?__SYSTEM__ : __SYSTEM__.'/'.GROUP_NAME);
         }
         
         // 定义项目基础加载路径
-        define('BASE_LIB_PATH', (defined('GROUP_NAME') && C('APP_GROUP_MODE')==1) ? SYSTEM_PATH.C('APP_GROUP_PATH').'/'.GROUP_NAME.'/' : LIB_PATH);
-        if(defined('GROUP_NAME')) {
-            if(1 == C('APP_GROUP_MODE')){ // 独立分组模式
-                $config_path    =   BASE_LIB_PATH.'Conf/';
-                $common_path    =   BASE_LIB_PATH.'Common/';
-            }else{ // 普通分组模式
-                $config_path    =   CONF_PATH.GROUP_NAME.'/';
-                $common_path    =   COMMON_PATH.GROUP_NAME.'/';             
-            }
+        define('BASE_LIB_PATH', (defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==1) ? SYSTEM_PATH.C('SYSTEM_APP_PATH').'/'.GROUP_NAME.'/' : LIB_PATH);
+		
+        if(true || defined('GROUP_NAME')) {		//	mos 肯定为真。。
+            
+			// 独立分组模式
+			$config_path    =   BASE_LIB_PATH.'Conf/';
+			$common_path    =   BASE_LIB_PATH.'Common/';
+            
             // 加载分组配置文件
             if(is_file($config_path.'config.php'))
                 C(include $config_path.'config.php');
@@ -154,8 +155,10 @@ class Dispatcher {
             if(is_file($config_path.'alias.php'))
                 alias_import(include $config_path.'alias.php');
             // 加载分组tags文件定义
+			/*	mos - tag 就不需要了，应用理应不能操控系统层，这里的tag类似于 HOOK系统钩子
             if(is_file($config_path.'tags.php'))
                 C('tags', include $config_path.'tags.php');
+			*/
             // 加载分组函数文件
             if(is_file($common_path.'function.php'))
                 include $common_path.'function.php';
@@ -165,10 +168,11 @@ class Dispatcher {
         
         // 当前模块和分组地址
         $moduleName    =   defined('MODULE_ALIAS')?MODULE_ALIAS:MODULE_NAME;
-        if(defined('GROUP_NAME')) {
+        
+		if(true || defined('GROUP_NAME')) {//mos - 肯定为真
             define('__URL__',!empty($domainModule)?__GROUP__.$depr : __GROUP__.$depr.$moduleName);
         }else{
-            define('__URL__',!empty($domainModule)?__APP__.'/' : __APP__.'/'.$moduleName);
+            define('__URL__',!empty($domainModule)?__SYSTEM__.'/' : __SYSTEM__.'/'.$moduleName);
         }
         // 当前操作地址
         define('__ACTION__',__URL__.$depr.(defined('ACTION_ALIAS')?ACTION_ALIAS:ACTION_NAME));
