@@ -18,7 +18,7 @@ if(MEMORY_LIMIT_ON) $GLOBALS['_startUseMems'] = memory_get_usage();
 // 系统目录定义
 defined('THINK_PATH') 	or define('THINK_PATH', dirname(__FILE__).'/');
 defined('SYSTEM_PATH') 	or define('SYSTEM_PATH', dirname($_SERVER['SCRIPT_FILENAME']).'/');
-defined('RUNTIME_PATH') or define('RUNTIME_PATH',realpath(SYSTEM_PATH).'/Runtime/');
+defined('RUNTIME_PATH') or define('RUNTIME_PATH',realpath(SYSTEM_PATH).'/_runtime/');
 defined('SYSTEM_DEBUG') 	or define('SYSTEM_DEBUG',false); // 是否调试模式
 
 $runtime = defined('MODE_NAME')?'~'.strtolower(MODE_NAME).'_runtime.php':'~runtime.php';
