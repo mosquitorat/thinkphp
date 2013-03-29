@@ -281,7 +281,7 @@ function D($name='',$layer='') {
     return $model;
 }
 
-/**
+/**					// 是否可以实例化其他 应用 的数据库 ??  mos
  * M函数用于实例化一个没有模型文件的Model
  * @param string $name Model名称 支持指定基础模型 例如 MongoModel:User
  * @param string $tablePrefix 表前缀
@@ -328,10 +328,10 @@ function A($name,$layer='',$common=false) {
         import($name.$layer);
     }
     $class      =   basename($name.$layer);
-    if(class_exists($class,false)) {
+	
+    if(class_exists($class,true)) {
         $action             =   new $class();
-        $_action[$name]     =   $action;
-        return $action;
+        $_action[$name]     =   $action;        return $action;
     }else {
         return false;
     }

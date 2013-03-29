@@ -141,7 +141,6 @@ class Dispatcher {
         
         // 定义项目基础加载路径
         define('BASE_LIB_PATH', (defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==1) ? SYSTEM_PATH.C('SYSTEM_APP_PATH').'/'.GROUP_NAME.'/' : LIB_PATH);
-		
         if(true || defined('GROUP_NAME')) {		//	mos 肯定为真。。
             
 			// 独立分组模式
@@ -155,10 +154,10 @@ class Dispatcher {
             if(is_file($config_path.'alias.php'))
                 alias_import(include $config_path.'alias.php');
             // 加载分组tags文件定义
-			/*	mos - tag 就不需要了，应用理应不能操控系统层，这里的tag类似于 HOOK系统钩子
+			///*	mos - tag 就不需要了，应用理应不能操控系统层，这里的tag类似于 HOOK系统钩子
             if(is_file($config_path.'tags.php'))
                 C('tags', include $config_path.'tags.php');
-			*/
+			//*/
             // 加载分组函数文件
             if(is_file($common_path.'function.php'))
                 include $common_path.'function.php';
@@ -254,7 +253,7 @@ class Dispatcher {
     static private function getGroup($var) {
         $group   = (!empty($_GET[$var])?$_GET[$var]:C('DEFAULT_GROUP'));
         unset($_GET[$var]);
-        return strip_tags(C('URL_CASE_INSENSITIVE') ?ucfirst(strtolower($group)):$group);
+        return strtolower($group);
     }
 
 }

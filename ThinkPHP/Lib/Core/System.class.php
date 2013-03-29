@@ -60,7 +60,9 @@ class System {
 
         /* 获取模板主题名称 */
         $templateSet =  C('DEFAULT_THEME');
-        if(C('TMPL_DETECT_THEME')) {// 自动侦测模板主题			//  mos - 可以删吧。
+        
+		/*
+		if(C('TMPL_DETECT_THEME')) {// 自动侦测模板主题			//  mos - 可以删吧。
             $t = C('VAR_TEMPLATE');
             if (isset($_GET[$t])){
                 $templateSet = $_GET[$t];
@@ -72,6 +74,7 @@ class System {
             }
             cookie('think_template',$templateSet,864000);
         }
+		*/
         /* 模板相关目录常量 */
         define('THEME_NAME',   $templateSet);                  // 当前模板主题名称
         $group   =  defined('GROUP_NAME')?GROUP_NAME.'/':'';

@@ -139,7 +139,9 @@ class Think {
         if(alias_import($class)) return ;
         $libPath    =   defined('BASE_LIB_PATH')?BASE_LIB_PATH:LIB_PATH;
         $group      =   defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==0 ?GROUP_NAME.'/':'';
+
         $file       =   $class.'.class.php';
+		
         if(substr($class,-8)=='Behavior') { // 加载行为
             if(require_array(array(
                 CORE_PATH.'Behavior/'.$file,
@@ -149,21 +151,28 @@ class Think {
                 || (defined('MODE_NAME') && require_cache(MODE_PATH.ucwords(MODE_NAME).'/Behavior/'.$file))) {
                 return ;
             }
-        }elseif(substr($class,-5)=='Model'){ // 加载模型
+        }
+		/*
+		elseif(substr($class,-5)=='Model'){ // 加载模型
             if(require_array(array(
                 LIB_PATH.'Model/'.$group.$file,
                 $libPath.'Model/'.$file,
                 EXTEND_PATH.'Model/'.$file),true)) {
                 return ;
             }
-        }elseif(substr($class,-6)=='Action'){ // 加载控制器
+        }
+		*/
+		//	mos 这里的控制器即为 API
+		elseif(substr($class,-6)=='Action'){ // 加载控制器
             if(require_array(array(
                 LIB_PATH.'Action/'.$group.$file,
                 $libPath.'Action/'.$file,
                 EXTEND_PATH.'Action/'.$file),true)) {
                 return ;
             }
-        }elseif(substr($class,0,5)=='Cache'){ // 加载缓存驱动
+        }
+		elseif(substr($class,0,5)=='Cache'){ // 加载缓存驱动
+		
             if(require_array(array(
                 EXTEND_PATH.'Driver/Cache/'.$file,
                 CORE_PATH.'Driver/Cache/'.$file),true)){
