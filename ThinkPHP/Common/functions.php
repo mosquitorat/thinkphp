@@ -23,24 +23,16 @@
  */
 function halt($error) {
     $e = array();
-    if (SYSTEM_DEBUG) {
+    if (APP_DEBUG) {
         //调试模式下输出错误信息
         if (!is_array($error)) {
             $trace          = debug_backtrace();
             $e['message']   = $error;
             $e['file']      = $trace[0]['file'];
-            $e['class']     = isset($trace[0]['class'])?$trace[0]['class']:'';
-            $e['function']  = isset($trace[0]['function'])?$trace[0]['function']:'';
             $e['line']      = $trace[0]['line'];
-            $traceInfo      = '';
-            $time = date('y-m-d H:i:m');
-            foreach ($trace as $t) {
-                $traceInfo .= '[' . $time . '] ' . $t['file'] . ' (' . $t['line'] . ') ';
-                $traceInfo .= $t['class'] . $t['type'] . $t['function'] . '(';
-                $traceInfo .= implode(', ', $t['args']);
-                $traceInfo .=')<br/>';
-            }
-            $e['trace']     = $traceInfo;
+            ob_start();
+            debug_print_backtrace();
+            $e['trace']     = ob_get_clean();
         } else {
             $e              = $error;
         }
@@ -60,7 +52,6 @@ function halt($error) {
     include C('TMPL_EXCEPTION_FILE');
     exit;
 }
-
 /**
  * 自定义异常处理
  * @param string $msg 异常消息
@@ -70,7 +61,7 @@ function halt($error) {
  */
 function throw_exception($msg, $type='ThinkException', $code=0) {
     if (class_exists($type, false))
-        throw new $type($msg, $code, true);
+        throw new $type($msg, $code);
     else
         halt($msg);        // 异常类型不存在则输出错误信息字串
 }
@@ -171,6 +162,7 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
     }elseif(false !== strpos($url,'@')) { // 解析域名
         list($url,$host)    =   explode('@',$info['path'], 2);
     }
+	
     // 解析子域名
     if(isset($host)) {
         $domain = $host.(strpos($host,'.')?'':strstr($_SERVER['HTTP_HOST'],'.'));
@@ -259,9 +251,10 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
         }
     }else{ // PATHINFO模式或者兼容URL模式
         if(isset($route)) {
-            $url    =   __SYSTEM__.'/'.rtrim($url,$depr);
+            $url    =   '/'.rtrim($url,$depr);
+			//echo __SYSTEM__;
         }else{
-            $url    =   __SYSTEM__.'/'.implode($depr,array_reverse($var));
+            $url    =   implode($depr,array_reverse($var));
         }
         if(!empty($vars)) { // 添加参数
             foreach ($vars as $var => $val){
@@ -278,12 +271,15 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
             }
         }
     }
+	
+//
     if(isset($anchor)){
         $url  .= '#'.$anchor;
     }
     if($domain) {
         $url   =  (is_ssl()?'https://':'http://').$domain.$url;
     }
+
     if($redirect) // 直接跳转URL
         redirect($url);
     else
@@ -300,8 +296,9 @@ function U($url='',$vars='',$suffix=true,$redirect=false,$domain=false) {
  */
 function W($name, $data=array(), $return=false,$path='') {
     $class      =   $name . 'Widget';
-    $path       =   empty($path) ? BASE_LIB_PATH : $path;
-    require_cache(BASE_LIB_PATH . 'Widget/' . $class . '.class.php');
+    $path       =   empty($path) ? APP_BASE_PATH : $path;
+
+    require_cache(APP_BASE_PATH . 'Widget/' . $class . '.class.php');
     if (!class_exists($class))
         throw_exception(L('_CLASS_NOT_EXIST_') . ':' . $class);
     $widget     =   Think::instance($class);
@@ -320,7 +317,7 @@ function W($name, $data=array(), $return=false,$path='') {
  */
 function filter($name, &$content) {
     $class      =   $name . 'Filter';
-    require_cache(BASE_LIB_PATH . 'Filter/' . $class . '.class.php');
+    require_cache(APP_BASE_PATH . 'Filter/' . $class . '.class.php');
     $filter     =   new $class();
     $content    =   $filter->run($content);
 }
@@ -392,13 +389,13 @@ function S($name,$value='',$options=null) {
     }elseif(is_null($value)) { // 删除缓存
         return $cache->rm($name);
     }else { // 缓存数据
-        $expire     =   is_numeric($options)?$options:NULL;
+        if(is_array($options)) {
+            $expire     =   isset($options['expire'])?$options['expire']:NULL;
+        }else{
+            $expire     =   is_numeric($options)?$options:NULL;
+        }
         return $cache->set($name, $value, $expire);
     }
-}
-// S方法的别名 已经废除 不再建议使用
-function cache($name,$value='',$options=null){
-    return S($name,$value,$options);
 }
 
 /**
@@ -769,4 +766,77 @@ function filter_exp(&$value){
     if (in_array(strtolower($value),array('exp','or'))){
         $value .= ' ';
     }
+}
+
+/////////////////////////////////////////////////////////////////
+
+/**
+ * 获取字符串的长度
+ *
+ * 计算时, 汉字或全角字符占1个长度, 英文字符占0.5个长度
+ *
+ * @param string  $str
+ * @param boolean $filter 是否过滤html标签
+ * @return int 字符串的长度
+ */
+function get_str_length($str, $filter = false){
+    if ($filter) {
+        $str = html_entity_decode($str, ENT_QUOTES);
+        $str = strip_tags($str);
+    }
+    return (strlen($str) + mb_strlen($str, 'UTF8')) / 4;
+}
+
+/**
+ * t函数用于过滤标签，输出没有html的干净的文本
+ * @param string text 文本内容
+ * @return string 处理后内容
+ */
+ 
+function t($text){
+    $text = nl2br($text);
+    $text = real_strip_tags($text);
+    //$text = htmlspecialchars($text,ENT_QUOTES);
+    $text = str_ireplace(array("\r","\n","\t","&nbsp;"),'',$text);
+    $text = trim($text);
+    return $text;
+}
+
+function get_caller_info(){
+	
+	// 获取调用者类名
+	$backtrace = debug_backtrace(true);
+	$class = $backtrace[2]['class'];
+	
+	// 获取调用者命名空间
+	if(strpos($class, '\\')){
+		$vars = explode('\\', $class);
+		$namespace = $vars[0];
+	} else {
+		$namespace = GROUP_NAME;
+	}
+
+	// 获取调用者路径
+	$i = 2;
+	while(true){
+		$path = isset($backtrace[$i]['file'])?($backtrace[$i]['file']) : '';
+		$i--;
+		if(false !==(strpos($path,realpath(C('SYSTEM_APP_PATH')))) || $i == 0){
+			break;
+		}
+	}
+
+	// 验证调用者是否非法
+	$start = strlen(realpath(C('SYSTEM_APP_PATH')))+1;
+	$app_name = substr($path, $start, strpos($path,'\\',$start) - $start);
+	
+	// 如果调用者的路径不为其命名空间名，并且也不是去调用其他类的Api模型，则判定为非法调用
+	/* TODO 这里可能存在隐患，主要是系统调用 */
+	if(($app_name != $namespace) && $vars[1] != 'ApiModel'){
+		exit('非法调用');
+	}
+
+	$caller['namespace'] = $namespace;
+	
+	return $caller;
 }

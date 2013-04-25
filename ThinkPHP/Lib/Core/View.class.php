@@ -111,6 +111,7 @@ class View {
         ob_start();
         ob_implicit_flush(0);
         if('php' == strtolower(C('TMPL_ENGINE_TYPE'))) { // 使用PHP原生模板
+		exit();
             // 模板阵列变量分解成为独立变量
             extract($this->tVar, EXTR_OVERWRITE);
             // 直接载入PHP模板

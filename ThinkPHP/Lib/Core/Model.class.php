@@ -87,7 +87,7 @@ class Model {
         if(is_null($tablePrefix)) {// 前缀为Null表示没有前缀
             $this->tablePrefix = '';
         }elseif('' != $tablePrefix) {
-            $this->tablePrefix = $tablePrefix;
+            $this->tablePrefix = $this->tablePrefix?$this->tablePrefix.$tablePrefix.'_':C('DB_PREFIX').$tablePrefix.'_';
         }else{
             $this->tablePrefix = $this->tablePrefix?$this->tablePrefix:C('DB_PREFIX');
         }
@@ -616,7 +616,7 @@ class Model {
     protected function _after_find(&$result,$options) {}
 
     protected function returnResult($data,$type=''){
-        $type = $type?$type:$this->options['result'];
+        $type = $type?$type:(isset($this->options['result'])?$this->options['result']:'');
         if ($type){
             if(is_array($type)){
                 $handler =  $type[1];

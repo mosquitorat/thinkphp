@@ -53,23 +53,20 @@ class Think {
         // 加载核心惯例配置文件
         C(include THINK_PATH.'Conf/convention.php');
         
-        // 加载项目配置文件
+        // 加载项目配置文件								可以合并到核心中  mos
         if(is_file(CONF_PATH.'config.php'))
             C(include CONF_PATH.'config.php');
 
         // 加载框架底层语言包
         L(include THINK_PATH.'Lang/'.strtolower(C('DEFAULT_LANG')).'.php');
 
-        // 加载模式系统行为定义		// mos - 可以删
+        // 加载模式系统行为定义
         if(C('SYSTEM_TAGS_ON')) {
-            if(isset($mode['extends'])) {
-                C('extends',is_array($mode['extends'])?$mode['extends']:include $mode['extends']);
-            }else{ // 默认加载系统行为扩展定义
-                C('extends', include THINK_PATH.'Conf/tags.php');
-            }
+			// 默认加载系统行为扩展定义
+			C('extends', include THINK_PATH.'Conf/tags.php');
         }
 
-        // 默认加载项目配置目录的tags文件定义
+        // 默认加载项目配置目录的tags文件定义			可以合并到核心中  mos
         C('tags', include CONF_PATH.'tags.php');
 
         $compile   = '';
@@ -83,12 +80,9 @@ class Think {
 			CORE_PATH.'Core/System.class.php',   // 应用程序类
 			CORE_PATH.'Core/Action.class.php', // 控制器类
 			CORE_PATH.'Core/View.class.php',  // 视图类
+			CORE_PATH.'Core/Api.class.php',	// API 抽象层
 		);
-        
-        // 项目追加核心编译列表文件
-        if(is_file(CONF_PATH.'core.php')) {
-            $list  =  array_merge($list,include CONF_PATH.'core.php');
-        }
+
         foreach ($list as $file){
             if(is_file($file))  {
                 require_cache($file);
@@ -96,7 +90,7 @@ class Think {
             }
         }
 
-        // 加载项目公共文件
+        // 加载项目公共文件								可以合并到核心中  mos
         if(is_file(COMMON_PATH.'common.php')) {
             include COMMON_PATH.'common.php';
             // 编译文件
@@ -104,7 +98,7 @@ class Think {
         }
 
      
-        // 加载项目别名定义
+        // 加载项目别名定义								可以合并到核心中  mos
         if(is_file(CONF_PATH.'alias.php')){ 
             $alias = include CONF_PATH.'alias.php';
             alias_import($alias);
@@ -131,15 +125,15 @@ class Think {
     /**
      * 系统自动加载ThinkPHP类库
      * 并且支持配置自动加载路径
+	 * 为保证各个分组（应用）的独立，这里仅加载系统核心使用的类库，和给分组（应用）调用的API。—— mos
      * @param string $class 对象类名
      * @return void
      */
     public static function autoload($class) {
         // 检查是否存在别名定义
         if(alias_import($class)) return ;
-        $libPath    =   defined('BASE_LIB_PATH')?BASE_LIB_PATH:LIB_PATH;
-        $group      =   defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==0 ?GROUP_NAME.'/':'';
-
+        $libPath    =   defined('APP_BASE_PATH')?APP_BASE_PATH:LIB_PATH;
+        $group      =   defined('GROUP_NAME')?GROUP_NAME:'';
         $file       =   $class.'.class.php';
 		
         if(substr($class,-8)=='Behavior') { // 加载行为
@@ -147,27 +141,36 @@ class Think {
                 CORE_PATH.'Behavior/'.$file,
                 EXTEND_PATH.'Behavior/'.$file,
                 LIB_PATH.'Behavior/'.$file,
-                $libPath.'Behavior/'.$file),true)
-                || (defined('MODE_NAME') && require_cache(MODE_PATH.ucwords(MODE_NAME).'/Behavior/'.$file))) {
+                $libPath.'Behavior/'.$file),true)			// 暂时不需要加载分组行为
+                ) {
                 return ;
             }
-        }
-		/*
+        }		
 		elseif(substr($class,-5)=='Model'){ // 加载模型
-            if(require_array(array(
-                LIB_PATH.'Model/'.$group.$file,
-                $libPath.'Model/'.$file,
-                EXTEND_PATH.'Model/'.$file),true)) {
-                return ;
-            }
+		
+			if(strpos($class, '\\')){
+				$vars = explode('\\', $class);
+				$namespace = $vars[0];
+				$file = $vars[1].'.class.php';
+			} else {
+				$namespace = $group;
+			}
+			$namespace = ($namespace == 'system') ? '' : $namespace;
+			if(!empty($namespace)){
+				// 加载各应用命名空间下的模型
+				if (require_cache(C('SYSTEM_APP_PATH').$namespace.'/Model/'.$file))	return;
+			} else {
+				// 加载系统模型
+				if (require_cache(LIB_PATH.'Model/'.$file))	return;
+			}
         }
-		*/
-		//	mos 这里的控制器即为 API
+		
 		elseif(substr($class,-6)=='Action'){ // 加载控制器
             if(require_array(array(
                 LIB_PATH.'Action/'.$group.$file,
-                $libPath.'Action/'.$file,
-                EXTEND_PATH.'Action/'.$file),true)) {
+                $libPath.'Action/'.$file,							//  这里的控制器只能被继承
+                /* EXTEND_PATH.'Action/'.$file), 暂时没有拓展*/
+				),true)) {
                 return ;
             }
         }
@@ -234,8 +237,14 @@ class Think {
      * @access public
      * @param mixed $e 异常对象
      */
-    static public function appException($e) {
-        halt($e->__toString());
+	static public function appException($e) {
+        $error = array();
+        $error['message']   = $e->getMessage();
+        $error['file']      = $e->getFile();
+        $error['line']      = $e->getLine();
+        $error['trace']     = $e->getTraceAsString();
+        Log::record($error['message'],Log::ERR);
+        halt($error);
     }
 
     /**
@@ -277,7 +286,8 @@ class Think {
     // 致命错误捕获
     static public function fatalError() {
         if ($e = error_get_last()) {
-            Think::appError($e['type'],$e['message'],$e['file'],$e['line']);
+            ob_end_clean();
+			function_exists('halt')?halt($e):exit('ERROR:'.$e['message']);
         }
     }
 

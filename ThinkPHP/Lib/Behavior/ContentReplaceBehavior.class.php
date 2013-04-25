@@ -46,6 +46,8 @@ class ContentReplaceBehavior extends Behavior {
             '__URL__'       =>  __URL__,
             '../Public'     => SYSTEM_TMPL_PATH.'Public',// 项目公共模板目录
             '__PUBLIC__'    =>  __ROOT__.'/Public',// 站点公共目录
+			'__STATIC__'	=> APP_STATIC_PATH,
+			'__UPLOAD__'	=> APP_UPLOAD_PATH,
         );
         // 允许用户自定义模板的字符串替换
         if(is_array(C('TMPL_PARSE_STRING')) )

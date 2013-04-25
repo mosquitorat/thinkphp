@@ -44,16 +44,18 @@ abstract class Widget {
             // 自动定位模板文件
             $name   = substr(get_class($this),0,-6);
             $filename   =  empty($templateFile)?$name:$templateFile;
-            $templateFile = BASE_LIB_PATH.'Widget/'.$name.'/'.$filename.C('TMPL_TEMPLATE_SUFFIX');
+            $templateFile = APP_BASE_PATH.'Widget/'.$name.'/'.$filename.C('TMPL_TEMPLATE_SUFFIX');
             if(!file_exists_case($templateFile))
                 throw_exception(L('_TEMPLATE_NOT_EXIST_').'['.$templateFile.']');
         }
         $template   =  strtolower($this->template?$this->template:(C('TMPL_ENGINE_TYPE')?C('TMPL_ENGINE_TYPE'):'php'));
+		$template = 'think';
+		
         if('php' == $template) {
             // 使用PHP模板
             if(!empty($var)) extract($var, EXTR_OVERWRITE);
             // 直接载入PHP模板
-            include $templateFile;
+            include $templateFile;			
         }elseif('think'==$template){ // 采用Think模板引擎
             if($this->checkCache($templateFile)) { // 缓存有效
                 // 分解变量并载入模板缓存

@@ -26,7 +26,7 @@ class Dispatcher {
      */
     static public function dispatch() {
         $urlMode  =  C('URL_MODEL');
-        if(!empty($_GET[C('VAR_PATHINFO')])) { // 判断URL里面是否有兼容模式参数
+        if(isset($_GET[C('VAR_PATHINFO')])) { // 判断URL里面是否有兼容模式参数
             $_SERVER['PATH_INFO']   = $_GET[C('VAR_PATHINFO')];
             unset($_GET[C('VAR_PATHINFO')]);
         }
@@ -77,7 +77,7 @@ class Dispatcher {
         }
 		*/
         // 分析PATHINFO信息
-        if(empty($_SERVER['PATH_INFO'])) {
+        if(!isset($_SERVER['PATH_INFO'])) {
             $types   =  explode(',',C('URL_PATHINFO_FETCH'));
             foreach ($types as $type){
                 if(0===strpos($type,':')) {// 支持函数判断
@@ -140,12 +140,14 @@ class Dispatcher {
         }
         
         // 定义项目基础加载路径
-        define('BASE_LIB_PATH', (defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==1) ? SYSTEM_PATH.C('SYSTEM_APP_PATH').'/'.GROUP_NAME.'/' : LIB_PATH);
-        if(true || defined('GROUP_NAME')) {		//	mos 肯定为真。。
-            
+        define('APP_BASE_PATH', (defined('GROUP_NAME') && C('SYSTEM_APP_MODE')==1) ? C('SYSTEM_APP_PATH').GROUP_NAME.'/' : LIB_PATH);
+        
+		if(true || defined('GROUP_NAME')) {		//	mos 肯定为真。。
+		
 			// 独立分组模式
-			$config_path    =   BASE_LIB_PATH.'Conf/';
-			$common_path    =   BASE_LIB_PATH.'Common/';
+
+			$config_path    =   APP_BASE_PATH.'Conf/';
+			$common_path    =   APP_BASE_PATH.'Common/';
             
             // 加载分组配置文件
             if(is_file($config_path.'config.php'))
@@ -154,10 +156,10 @@ class Dispatcher {
             if(is_file($config_path.'alias.php'))
                 alias_import(include $config_path.'alias.php');
             // 加载分组tags文件定义
-			///*	mos - tag 就不需要了，应用理应不能操控系统层，这里的tag类似于 HOOK系统钩子
+			/*	mos - tag 就不需要了，应用理应不能操控系统层，这里的tag类似于 HOOK系统钩子
             if(is_file($config_path.'tags.php'))
                 C('tags', include $config_path.'tags.php');
-			//*/
+			*/
             // 加载分组函数文件
             if(is_file($common_path.'function.php'))
                 include $common_path.'function.php';

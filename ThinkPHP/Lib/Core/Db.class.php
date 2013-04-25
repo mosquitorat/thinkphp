@@ -746,6 +746,7 @@ class Db {
                 return $value;
             }
         }
+		//echo $sql."<br />";
         $result   = $this->query($sql);
         if($cache && false !== $result ) { // 查询缓存写入
             S($key,$result,$cache);

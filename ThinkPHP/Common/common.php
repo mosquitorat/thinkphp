@@ -17,6 +17,86 @@
  */
 
 /**
+ * 获取输入参数 支持过滤和默认值
+ * 使用方法:
+ * <code>
+ * I('id',0); 获取id参数 自动判断get或者post
+ * I('post.name','','htmlspecialchars'); 获取$_POST['name']
+ * I('get.'); 获取$_GET
+ * </code> 
+ * @param string $name 变量的名称 支持指定类型
+ * @param mixed $default 不存在的时候默认值
+ * @param mixed $filter 参数过滤方法
+ * @return mixed
+ */
+function I($name,$default='',$filter='') {
+    if(strpos($name,'.')) { // 指定参数来源
+        list($method,$name) =   explode('.',$name);
+    }else{ // 默认为自动判断
+        $method =   'param';
+    }
+    switch(strtolower($method)) {
+        case 'get'     :   $input =& $_GET;break;
+        case 'post'    :   $input =& $_POST;break;
+        case 'put'     :   parse_str(file_get_contents('php://input'), $input);break;
+        case 'param'   :  
+            switch($_SERVER['REQUEST_METHOD']) {
+                case 'POST':
+                    $input  =  $_POST;
+                    break;
+                case 'PUT':
+                    parse_str(file_get_contents('php://input'), $input);
+                    break;
+                default:
+                    $input  =  $_GET;
+            }
+            if(C('VAR_URL_PARAMS')){
+                $params = $_GET[C('VAR_URL_PARAMS')];
+                $input  =   array_merge($input,$params);
+            }
+            break;
+        case 'request' :   $input =& $_REQUEST;   break;
+        case 'session' :   $input =& $_SESSION;   break;
+        case 'cookie'  :   $input =& $_COOKIE;    break;
+        case 'server'  :   $input =& $_SERVER;    break;
+        case 'globals' :   $input =& $GLOBALS;    break;
+        default:
+            return NULL;
+    }
+    // 全局过滤
+    // array_walk_recursive($input,'filter_exp');
+    if(C('VAR_FILTERS')) {
+        $_filters    =   explode(',',C('VAR_FILTERS'));
+        foreach($_filters as $_filter){
+            // 全局参数过滤
+            array_walk_recursive($input,$_filter);
+        }
+    }
+    if(empty($name)) { // 获取全部变量
+        $data       =   $input; 
+    }elseif(isset($input[$name])) { // 取值操作
+        $data       =	$input[$name];
+        $filters    =   isset($filter)?$filter:C('DEFAULT_FILTER');
+        if($filters) {
+            $filters    =   explode(',',$filters);
+            foreach($filters as $filter){
+                if(function_exists($filter)) {
+                    $data   =   is_array($data)?array_map($filter,$data):$filter($data); // 参数过滤
+                }else{
+                    $data   =   filter_var($data,is_int($filter)?$filter:filter_id($filter));
+                    if(false === $data) {
+                        return	 isset($default)?$default:NULL;
+                    }
+                }
+            }
+        }
+    }else{ // 变量默认值
+        $data       =	 isset($default)?$default:NULL;
+    }
+    return $data;
+}
+
+/**
  * 记录和统计时间（微秒）和内存使用情况
  * 使用方法:
  * <code>
@@ -162,7 +242,7 @@ function import($class, $baseUrl = '', $ext='.class.php') {
         $_file[$class . $baseUrl] = true;
     $class_strut     = explode('/', $class);
     if (empty($baseUrl)) {
-        $libPath    =   defined('BASE_LIB_PATH')?BASE_LIB_PATH:LIB_PATH;
+        $libPath    =   defined('APP_BASE_PATH')?APP_BASE_PATH:LIB_PATH;
         if ('@' == $class_strut[0] || SYSTEM_NAME == $class_strut[0]) {
             //加载当前项目应用类库
             $baseUrl = dirname($libPath);
@@ -182,7 +262,7 @@ function import($class, $baseUrl = '', $ext='.class.php') {
         $baseUrl    .= '/';
     $classfile       = $baseUrl . $class . $ext;
     if (!class_exists(basename($class),false)) {
-        // 如果类不存在 则导入类库文件
+        // 如果类不存在 则导入类库文件 (即同一个类，此处只导入一次)
         return require_cache($classfile);
     }
 }
@@ -255,46 +335,84 @@ function alias_import($alias, $classfile='') {
  * @return Model
  */
 function D($name='',$layer='') {
+
     if(empty($name)) return new Model;
     static $_model  =   array();
-    $layer          =   $layer?$layer:C('DEFAULT_M_LAYER');
-    if(strpos($name,'://')) {// 指定项目
-        $name       =   str_replace('://','/'.$layer.'/',$name);
-    }else{
-        $name       =   C('DEFAULT_APP').'/'.$layer.'/'.$name;
+    //$layer          =   $layer?$layer:C('DEFAULT_M_LAYER');		如果需要分层，需要在自动加载时，加载分层路径
+    //$name       =   C('CURRENT_APP').'/'.$layer.'/'.$name;
+    
+	$caller = get_caller_info();
+	
+	$class = $caller['namespace'].'\\'.$name.'Model';
+	$tablePrefix = ($caller['namespace'] == 'system') ? '':GROUP_NAME;
+	
+	// 查看缓存
+	if(isset($_model[$class]))   return $_model[$class];
+	
+	// 这里没有 显示import类库，直接检查 自动加载 是否 加载了该类库
+	if(class_exists($class, true)) {
+        $model      =   new $class(basename($name), $tablePrefix);
+    }else {	
+	    $model      =   new Model(basename($name), $tablePrefix);
     }
-    if(isset($_model[$name]))   return $_model[$name];
-    $path           =   explode('/',$name);
-    if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
-        import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
-    }else{
-        import($name.$layer);
-    } 
-    $class          =   basename($name.$layer);
-    if(class_exists($class)) {
-        $model      =   new $class(basename($name));
-    }else {
-        $model      =   new Model(basename($name));
-    }
-    $_model[$name]  =  $model;
+    $_model[$class]  =  $model;
     return $model;
 }
 
-/**					// 是否可以实例化其他 应用 的数据库 ??  mos
+/**
+ * api函数用于各个应用之间或应用与系统之间的调用接口
+ * @param string $name # 或 应用名
+ * @return Model | Error msg
+ */
+function api($name='') {
+	static $_api  =  array();
+	if(isset($_api[$name]))   return $_api[$name];
+	
+	// 如果当前应用 API 模型被 加载，则返回 NULL
+	//if(class_exists('ApiModel', false))	return NULL;
+	$caller = get_caller_info();
+	
+	if ($name == '#') {
+		// 调用系统接口，使用Think类的自动加载 生成实例
+			if(class_exists('system\\ApiModel', true)){
+				if(in_array(strtolower($caller['namespace']),explode(',',strtolower(C('SYSTEM_API_WHITE_LIST'))))){
+					$model      =   new system\ApiModel('Api');
+				}else{
+					exit('不允许调用该API');
+				}
+			} else {
+				// TODO 抛出异常
+				exit('系统错误，未定义API模型');
+			}
+	} else if (in_array(strtolower($name),explode(',',strtolower(C('SYSTEM_APP_LIST'))))) {
+		// TODO 导入其他 应用的 API 模型
+		// import()
+		// $model = new ApiModel('Api', GROUP_NAME);
+	} else {
+		return false;
+	}
+	
+	$_api[$name] = $model;
+	return $model;
+}
+
+
+/**
  * M函数用于实例化一个没有模型文件的Model
  * @param string $name Model名称 支持指定基础模型 例如 MongoModel:User
  * @param string $tablePrefix 表前缀
  * @param mixed $connection 数据库连接信息
  * @return Model
  */
+ // TODO 修改 M 方法
 function M($name='', $tablePrefix='',$connection='') {
     static $_model  = array();
-    if(strpos($name,':')) {
-        list($class,$name)    =  explode(':',$name);
-    }else{
-        $class      =   'Model';
-    }
+
+	$caller = get_caller_info();
+	
+	$class = 'Model';
+	$tablePrefix = ($caller['namespace'] == 'system') ? '':GROUP_NAME;
+	
     $guid           =   $tablePrefix . $name . '_' . $class;
     if (!isset($_model[$guid]))
         $_model[$guid] = new $class($name,$tablePrefix,$connection);
@@ -320,7 +438,7 @@ function A($name,$layer='',$common=false) {
     $path           =   explode('/',$name);
 	
     if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组		// !! mos - 跨组调用，不用，换成接口
-        $baseUrl    =   $path[0]== '@' ? dirname(BASE_LIB_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
+        $baseUrl    =   $path[0]== '@' ? dirname(APP_BASE_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }elseif($common) { // 加载公共类库目录
         import(str_replace('@/','',$name).$layer,LIB_PATH);
@@ -329,7 +447,7 @@ function A($name,$layer='',$common=false) {
     }
     $class      =   basename($name.$layer);
 	
-    if(class_exists($class,true)) {
+    if(class_exists($class, false)) {
         $action             =   new $class();
         $_action[$name]     =   $action;        return $action;
     }else {

@@ -79,7 +79,7 @@ class  ThinkTemplate {
         $this->tVar         =   $templateVar;
         $templateCacheFile  =   $this->loadTemplate($templateFile,$prefix);
         // 模板阵列变量分解成为独立变量
-        extract($templateVar, EXTR_OVERWRITE);
+		if(!empty($templateVar))	extract($templateVar, EXTR_OVERWRITE);
         //载入模版缓存文件
         include $templateCacheFile;
     }
@@ -107,11 +107,13 @@ class  ThinkTemplate {
         if(C('LAYOUT_ON')) {
             if(false !== strpos($tmplContent,'{__NOLAYOUT__}')) { // 可以单独定义不使用布局
                 $tmplContent = str_replace('{__NOLAYOUT__}','',$tmplContent);
+			
             }else{ // 替换布局的主体内容
                 $layoutFile  =  THEME_PATH.C('LAYOUT_NAME').$this->config['template_suffix'];
                 $tmplContent = str_replace($this->config['layout_item'],$tmplContent,file_get_contents($layoutFile));
             }
         }
+		
         // 编译模板内容
         $tmplContent =  $this->compiler($tmplContent);
         // 检测模板目录
@@ -143,6 +145,7 @@ class  ThinkTemplate {
             $replace        = array('><','>');
             $tmplContent    = preg_replace($find, $replace, $tmplContent);
         }
+		
         // 优化生成的php代码
         $tmplContent = str_replace('?><?php','',$tmplContent);
         return strip_whitespace($tmplContent);

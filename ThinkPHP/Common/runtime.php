@@ -75,6 +75,7 @@ defined('LIB_PATH')     or define('LIB_PATH',       SYSTEM_PATH.'library/'); // 
 defined('CONF_PATH')    or define('CONF_PATH',      SYSTEM_PATH.'config/'); // 项目配置目录		// mos - 可放入 核心
 defined('LANG_PATH')    or define('LANG_PATH',      SYSTEM_PATH.'language/'); // 项目语言包目录
 defined('TMPL_PATH')    or define('TMPL_PATH',      SYSTEM_PATH.'template/'); // 项目模板目录
+defined('APP_TMPL_PATH')or define('APP_TMPL_PATH',  SYSTEM_PATH.'Tpl/'); // 项目模板目录
 defined('HTML_PATH')    or define('HTML_PATH',      SYSTEM_PATH.'html/'); // 项目静态目录
 defined('LOG_PATH')     or define('LOG_PATH',       RUNTIME_PATH.'Logs/'); // 项目日志目录
 defined('TEMP_PATH')    or define('TEMP_PATH',      RUNTIME_PATH.'Temp/'); // 项目缓存目录

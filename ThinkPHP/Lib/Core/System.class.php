@@ -80,11 +80,15 @@ class System {
         $group   =  defined('GROUP_NAME')?GROUP_NAME.'/':'';
 
         // 独立分组模式			!!
-		define('THEME_PATH',   BASE_LIB_PATH.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
-		define('SYSTEM_TMPL_PATH',__ROOT__.'/'.SYSTEM_NAME.(SYSTEM_NAME?'/':'').C('SYSTEM_APP_PATH').'/'.$group.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
+		define('THEME_PATH',   APP_BASE_PATH.basename(APP_TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
+		define('SYSTEM_TMPL_PATH',__ROOT__.'/'.SYSTEM_NAME.(SYSTEM_NAME?'/':'').C('SYSTEM_APP_PATH').$group.basename(TMPL_PATH).'/'.(THEME_NAME?THEME_NAME.'/':''));
+		define('APP_STATIC_PATH','/'.C('SYSTEM_APP_PATH').$group.'Static');
+		define('APP_UPLOAD_PATH','/'.C('SYSTEM_APP_PATH').$group.'Upload');
+		define('APP_PUBLIC_PATH','/'.C('SYSTEM_APP_PATH').$group.'Tpl/_public');
 
 		
         C('CACHE_PATH',CACHE_PATH.$group);
+		
         //动态配置 TMPL_EXCEPTION_FILE,改为绝对地址
         C('TMPL_EXCEPTION_FILE',realpath(C('TMPL_EXCEPTION_FILE')));
         return ;
@@ -180,8 +184,8 @@ class System {
             }
         } catch (ReflectionException $e) { 
             // 方法调用发生异常后 引导到__call方法处理
-            $method = new ReflectionMethod($module,'__call');
-            $method->invokeArgs($module,array($action,''));
+            //$method = new ReflectionMethod($module,'__call');
+            //$method->invokeArgs($module,array($action,''));
         }
         return ;
     }
