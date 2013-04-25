@@ -425,4 +425,15 @@ abstract class Action {
         // 执行后续操作
         tag('action_end');
     }
+	
+	/**
+	  * 控制器中的widget输出
+	  * @access protected
+	  * @param string $name
+	  */ 
+	
+	protected function widget($name) {
+		C('TMPL_ENGINE_TYPE','widget');
+	    W($name);
+	}
 }

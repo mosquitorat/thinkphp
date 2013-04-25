@@ -100,6 +100,7 @@ class  ThinkTemplate {
         }else{
             $tmplContent =  $tmplTemplateFile;
         }
+		//echo ($tmplTemplateFile);
          // 根据模版文件名定位缓存文件
         $tmplCacheFile = $this->config['cache_path'].$prefix.md5($tmplTemplateFile).$this->config['cache_suffix'];
 
@@ -113,7 +114,6 @@ class  ThinkTemplate {
                 $tmplContent = str_replace($this->config['layout_item'],$tmplContent,file_get_contents($layoutFile));
             }
         }
-		
         // 编译模板内容
         $tmplContent =  $this->compiler($tmplContent);
         // 检测模板目录
@@ -132,7 +132,8 @@ class  ThinkTemplate {
      * @param mixed $tmplContent 模板内容
      * @return string
      */
-    protected function compiler($tmplContent) {
+    public function compiler($tmplContent) {
+	
         //模板解析
         $tmplContent =  $this->parse($tmplContent);
         // 还原被替换的Literal标签

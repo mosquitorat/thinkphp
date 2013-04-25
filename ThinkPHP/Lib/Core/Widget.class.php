@@ -49,14 +49,25 @@ abstract class Widget {
                 throw_exception(L('_TEMPLATE_NOT_EXIST_').'['.$templateFile.']');
         }
         $template   =  strtolower($this->template?$this->template:(C('TMPL_ENGINE_TYPE')?C('TMPL_ENGINE_TYPE'):'php'));
-		$template = 'think';
-		
-        if('php' == $template) {
-            // 使用PHP模板
-            if(!empty($var)) extract($var, EXTR_OVERWRITE);
-            // 直接载入PHP模板
-            include $templateFile;			
+	
+		// 在源 PHP 中使用 Widget 输出，这里使用 thinkphp 引擎进行渲染
+        if('widget' == $template) {
+		// 恢复 配置，用于 thinkphp 渲染
+			C('TMPL_ENGINE_TYPE','think');
+			$pares_tpl_params['file'] = $templateFile;
+			$pares_tpl_params['var'] = $var;
+			// 页面缓存
+			ob_start();
+			ob_implicit_flush(0);
+			tag('view_parse',$pares_tpl_params);
+			$content = ob_get_clean();
+			tag('view_filter',$content);
+			// 网页字符编码
+			header('Content-Type:'.C('TMPL_CONTENT_TYPE').'; charset='.C('DEFAULT_CHARSET'));
+			header('Cache-control: '.C('HTTP_CACHE_CONTROL'));  // 页面缓存控制
+			echo $content;
         }elseif('think'==$template){ // 采用Think模板引擎
+		
             if($this->checkCache($templateFile)) { // 缓存有效
                 // 分解变量并载入模板缓存
                 extract($var, EXTR_OVERWRITE);
@@ -67,7 +78,12 @@ abstract class Widget {
                 // 编译并加载模板文件
                 $tpl->fetch($templateFile,$var);
             }
-        }else{
+        }elseif('php' == $template) {
+		    // 使用PHP模板
+            if(!empty($var)) extract($var, EXTR_OVERWRITE);
+            // 直接载入PHP模板
+            include $templateFile;
+		}else{
             $class   = 'Template'.ucwords($template);
             if(is_file(CORE_PATH.'Driver/Template/'.$class.'.class.php')) {
                 // 内置驱动

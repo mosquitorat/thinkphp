@@ -87,7 +87,6 @@ class View {
         // 网页字符编码
         header('Content-Type:'.$contentType.'; charset='.$charset);
         header('Cache-control: '.C('HTTP_CACHE_CONTROL'));  // 页面缓存控制
-        header('X-Powered-By:ThinkPHP');
         // 输出模板文件
         echo $content;
     }
@@ -111,7 +110,6 @@ class View {
         ob_start();
         ob_implicit_flush(0);
         if('php' == strtolower(C('TMPL_ENGINE_TYPE'))) { // 使用PHP原生模板
-		exit();
             // 模板阵列变量分解成为独立变量
             extract($this->tVar, EXTR_OVERWRITE);
             // 直接载入PHP模板
@@ -119,6 +117,7 @@ class View {
         }else{
             // 视图解析标签
             $params = array('var'=>$this->tVar,'file'=>$templateFile,'content'=>$content,'prefix'=>$prefix);
+
             tag('view_parse',$params);
         }
         // 获取并清空缓存
