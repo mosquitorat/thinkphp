@@ -60,7 +60,7 @@ class Model {
     // 是否批处理验证
     protected $patchValidate    =   false;
     // 链操作方法列表
-    protected $methods          =   array('table','order','alias','having','group','lock','distinct','auto','filter','validate');
+    protected $methods          =   array('table','order','alias','having','group','lock','distinct','auto','filter','validate','token');
 
     /**
      * 架构函数
@@ -112,7 +112,7 @@ class Model {
                 $db   =  $this->dbName?$this->dbName:C('DB_NAME');
                 $fields = F('_fields/'.strtolower($db.'.'.$this->name));
                 if($fields) {
-                    $version    =   C('DB_FIELD_VERISON');
+                    $version    =   C('DB_FIELD_VERSION');
                     if(empty($version) || $fields['_version']== $version) {
                         $this->fields   =   $fields;
                         return ;
@@ -148,7 +148,7 @@ class Model {
         }
         // 记录字段类型信息
         $this->fields['_type'] =  $type;
-        if(C('DB_FIELD_VERISON')) $this->fields['_version'] =   C('DB_FIELD_VERISON');
+        if(C('DB_FIELD_VERISON')) $this->fields['_version'] =   C('DB_FIELD_VERSION');
 
         // 2008-3-7 增加缓存开关控制
         if(C('DB_FIELDS_CACHE')){
@@ -800,7 +800,7 @@ class Model {
         if(!$this->autoValidation($data,$type)) return false;
 
         // 表单令牌验证
-        if(C('TOKEN_ON') && !$this->autoCheckToken($data)) {
+        if(!$this->autoCheckToken($data)) {
             $this->error = L('_TOKEN_ERROR_');
             return false;
         }
@@ -828,6 +828,8 @@ class Model {
     // 自动表单令牌验证
     // TODO  ajax无刷新多次提交暂不能满足
     public function autoCheckToken($data) {
+	// 支持使用token(false) 关闭令牌验证
+        if(isset($this->options['token']) && !$this->options['token']) return true;
         if(C('TOKEN_ON')){
             $name   = C('TOKEN_NAME');
             if(!isset($data[$name]) || !isset($_SESSION[$name])) { // 令牌数据无效

@@ -48,13 +48,17 @@ class Dispatcher {
 		/*										mos - 没有子域名
         if(C('SYSTEM_SUB_DOMAIN_DEPLOY')) {
             $rules      = C('SYSTEM_SUB_DOMAIN_RULES');
-            $subDomain  = strtolower(substr($_SERVER['HTTP_HOST'],0,strpos($_SERVER['HTTP_HOST'],'.')));
-            define('SUB_DOMAIN',$subDomain); // 二级域名定义
-            if($subDomain && isset($rules[$subDomain])) {
-                $rule =  $rules[$subDomain];
-            }elseif(isset($rules['*'])){ // 泛域名支持
-                if('www' != $subDomain && !in_array($subDomain,C('SYSTEM_SUB_DOMAIN_DENY'))) {
-                    $rule =  $rules['*'];
+            if(isset($rules[$_SERVER['HTTP_HOST']])) { // 完整域名或者IP配置
+                $rule = $rules[$_SERVER['HTTP_HOST']];
+            }else{
+                $subDomain  = strtolower(substr($_SERVER['HTTP_HOST'],0,strpos($_SERVER['HTTP_HOST'],'.')));
+                define('SUB_DOMAIN',$subDomain); // 二级域名定义
+                if($subDomain && isset($rules[$subDomain])) {
+                    $rule =  $rules[$subDomain];
+                }elseif(isset($rules['*'])){ // 泛域名支持
+                    if('www' != $subDomain && !in_array($subDomain,C('APP_SUB_DOMAIN_DENY'))) {
+                        $rule =  $rules['*'];
+                    }
                 }
             }
             if(!empty($rule)) {
@@ -95,11 +99,18 @@ class Dispatcher {
             tag('path_info');
             $part =  pathinfo($_SERVER['PATH_INFO']);
             define('__EXT__', isset($part['extension'])?strtolower($part['extension']):'');
-            if(C('URL_HTML_SUFFIX')) {
-                $_SERVER['PATH_INFO'] = preg_replace('/\.('.trim(C('URL_HTML_SUFFIX'),'.').')$/i', '', $_SERVER['PATH_INFO']);
-            }elseif(__EXT__) {
-                $_SERVER['PATH_INFO'] = preg_replace('/.'.__EXT__.'$/i','',$_SERVER['PATH_INFO']);
+            if(__EXT__){
+                if(C('URL_DENY_SUFFIX') && preg_match('/\.('.trim(C('URL_DENY_SUFFIX'),'.').')$/i', $_SERVER['PATH_INFO'])){
+                    send_http_status(404);
+                    exit;
+                }
+                if(C('URL_HTML_SUFFIX')) {
+                    $_SERVER['PATH_INFO'] = preg_replace('/\.('.trim(C('URL_HTML_SUFFIX'),'.').')$/i', '', $_SERVER['PATH_INFO']);
+               }else{
+                    $_SERVER['PATH_INFO'] = preg_replace('/.'.__EXT__.'$/i','',$_SERVER['PATH_INFO']);
+                }
             }
+			
             if(!self::routerCheck()){   // 检测路由规则 如果没有则按默认规则调度URL
                 $paths = explode($depr,trim($_SERVER['PATH_INFO'],'/'));
                 if(C('VAR_URL_PARAMS')) {
@@ -136,7 +147,7 @@ class Dispatcher {
         if (C('SYSTEM_APP_LIST')) {
             define('GROUP_NAME', self::getGroup(C('VAR_GROUP')));
             // 分组URL地址
-            define('__GROUP__',(!empty($domainGroup) || strtolower(GROUP_NAME) == strtolower(C('DEFAULT_GROUP')) )?__SYSTEM__ : __SYSTEM__.'/'.GROUP_NAME);
+            define('__GROUP__',(!empty($domainGroup) || strtolower(GROUP_NAME) == strtolower(C('DEFAULT_GROUP')) )?__SYSTEM__ : __SYSTEM__.'/'.(C('URL_CASE_INSENSITIVE') ? strtolower(GROUP_NAME) : GROUP_NAME));
         }
         
         // 定义项目基础加载路径
@@ -171,12 +182,13 @@ class Dispatcher {
         $moduleName    =   defined('MODULE_ALIAS')?MODULE_ALIAS:MODULE_NAME;
         
 		if(true || defined('GROUP_NAME')) {//mos - 肯定为真
-            define('__URL__',!empty($domainModule)?__GROUP__.$depr : __GROUP__.$depr.$moduleName);
+            define('__URL__',!empty($domainModule)?__GROUP__.$depr : __GROUP__.$depr.(C('URL_CASE_INSENSITIVE') ? strtolower($moduleName) : $moduleName));
         }else{
-            define('__URL__',!empty($domainModule)?__SYSTEM__.'/' : __SYSTEM__.'/'.$moduleName);
+            define('__URL__',!empty($domainModule)?__SYSTEM__.'/' : __SYSTEM__.'/'.(C('URL_CASE_INSENSITIVE') ? strtolower($moduleName) : $moduleName));
         }
         // 当前操作地址
         define('__ACTION__',__URL__.$depr.(defined('ACTION_ALIAS')?ACTION_ALIAS:ACTION_NAME));
+
         //保证$_REQUEST正常取值
         $_REQUEST = array_merge($_POST,$_GET);
     }

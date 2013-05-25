@@ -181,11 +181,13 @@ class System {
             }else{
                 // 操作方法不是Public 抛出异常
                 throw new ReflectionException();
+				
             }
         } catch (ReflectionException $e) { 
             // 方法调用发生异常后 引导到__call方法处理
-            //$method = new ReflectionMethod($module,'__call');
-            //$method->invokeArgs($module,array($action,''));
+            $method = new ReflectionMethod($module,'__call');
+            $method->invokeArgs($module,array($action,''));
+			/* TODO _404 非法操作*/
         }
         return ;
     }
@@ -208,8 +210,6 @@ class System {
         System::exec();
         // 项目结束标签
         tag('app_end');
-        // 保存日志记录
-        if(C('LOG_RECORD')) Log::save();
         return ;
     }
 

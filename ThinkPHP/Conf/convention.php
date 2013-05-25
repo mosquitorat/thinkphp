@@ -122,7 +122,11 @@ return  array(
     // 0 (普通模式); 1 (PATHINFO 模式); 2 (REWRITE  模式); 3 (兼容模式)  默认为PATHINFO 模式，提供最好的用户体验和SEO支持
     'URL_PATHINFO_DEPR'     => '/',	// PATHINFO模式下，各参数之间的分割符号
     'URL_PATHINFO_FETCH'    =>   'ORIG_PATH_INFO,REDIRECT_PATH_INFO,REDIRECT_URL', // 用于兼容判断PATH_INFO 参数的SERVER替代变量列表
-    'URL_HTML_SUFFIX'       => '',  // URL伪静态后缀设置
+    'URL_HTML_SUFFIX'       => 'html',  // URL伪静态后缀设置
+	'URL_DENY_SUFFIX'		=> 'ico|png|gif|jpg',
+	/*	感觉没什么用
+	 *	https://github.com/liu21st/thinkphp/commit/21db54fd1c75828e38edb538c06664b6322da99f
+	*/
     'URL_PARAMS_BIND'       =>  true, // URL变量绑定到Action方法参数
     'URL_404_REDIRECT'      =>  '', // 404 跳转页面 部署模式有效
 
@@ -137,7 +141,7 @@ return  array(
     'VAR_TEMPLATE'          => 't',		// 默认模板切换变量
     'VAR_FILTERS'           =>  'filter_exp',     // 全局系统变量的默认过滤方法 多个用逗号分割
 
-    'OUTPUT_ENCODE'         =>  true, // 页面压缩输出
+    'OUTPUT_ENCODE'         =>  false, // 页面压缩输出			mos  可以为 true 吧？为什么搞成false？
     'HTTP_CACHE_CONTROL'    =>  'private', // 网页缓存控制
 
 );

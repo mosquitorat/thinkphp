@@ -167,8 +167,8 @@ class Think {
 		
 		elseif(substr($class,-6)=='Action'){ // 加载控制器
             if(require_array(array(
-                LIB_PATH.'Action/'.$group.$file,
-                $libPath.'Action/'.$file,							//  这里的控制器只能被继承
+                $libPath.'Action/'.$group.$file,					//  不知道这里弄反没有，之前把$libPath和LIB_PATH搞反了，现在搞回来了不知道有什么bug
+                LIB_PATH.'Action/'.$file,							//  这里的控制器只能被继承
                 /* EXTEND_PATH.'Action/'.$file), 暂时没有拓展*/
 				),true)) {
                 return ;
@@ -240,9 +240,16 @@ class Think {
 	static public function appException($e) {
         $error = array();
         $error['message']   = $e->getMessage();
-        $error['file']      = $e->getFile();
-        $error['line']      = $e->getLine();
-        $error['trace']     = $e->getTraceAsString();
+        $trace  =   $e->getTrace();
+
+        if('throw_exception'==$trace[0]['function']) {
+            $error['file']  =   $trace[0]['file'];
+            $error['line']  =   $trace[0]['line'];
+        }else{
+            $error['file']      = $e->getFile();
+            $error['line']      = $e->getLine();
+        }
+		
         Log::record($error['message'],Log::ERR);
         halt($error);
     }
@@ -285,9 +292,19 @@ class Think {
     
     // 致命错误捕获
     static public function fatalError() {
+		 // 保存日志记录
+        if(C('LOG_RECORD')) Log::save();
         if ($e = error_get_last()) {
-            ob_end_clean();
-			function_exists('halt')?halt($e):exit('ERROR:'.$e['message']);
+			switch($e['type']){
+              case E_ERROR:
+              case E_PARSE:
+              case E_CORE_ERROR:
+              case E_COMPILE_ERROR:
+              case E_USER_ERROR:  
+                ob_end_clean();
+                function_exists('halt')?halt($e):exit('ERROR:'.$e['message']);
+                break;
+            }
         }
     }
 

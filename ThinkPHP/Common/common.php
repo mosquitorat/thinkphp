@@ -29,7 +29,7 @@
  * @param mixed $filter 参数过滤方法
  * @return mixed
  */
-function I($name,$default='',$filter='') {
+function I($name,$default='',$filter=null) {
     if(strpos($name,'.')) { // 指定参数来源
         list($method,$name) =   explode('.',$name);
     }else{ // 默认为自动判断
@@ -50,9 +50,8 @@ function I($name,$default='',$filter='') {
                 default:
                     $input  =  $_GET;
             }
-            if(C('VAR_URL_PARAMS')){
-                $params = $_GET[C('VAR_URL_PARAMS')];
-                $input  =   array_merge($input,$params);
+            if(C('VAR_URL_PARAMS') && isset($_GET[C('VAR_URL_PARAMS')])){
+                $input  =   array_merge($input,$_GET[C('VAR_URL_PARAMS')]);
             }
             break;
         case 'request' :   $input =& $_REQUEST;   break;
@@ -344,7 +343,7 @@ function D($name='',$layer='') {
 	$caller = get_caller_info();
 	
 	$class = $caller['namespace'].'\\'.$name.'Model';
-	$tablePrefix = ($caller['namespace'] == 'system') ? '':GROUP_NAME;
+	$tablePrefix = ($caller['namespace'] == 'system') ? '':$caller['namespace'];
 	
 	// 查看缓存
 	if(isset($_model[$class]))   return $_model[$class];
@@ -385,9 +384,11 @@ function api($name='') {
 				exit('系统错误，未定义API模型');
 			}
 	} else if (in_array(strtolower($name),explode(',',strtolower(C('SYSTEM_APP_LIST'))))) {
-		// TODO 导入其他 应用的 API 模型
-		// import()
-		// $model = new ApiModel('Api', GROUP_NAME);
+		// 使用自动加载来调用
+		// TODO：白名单机制，未定义API模型机制
+		
+		$apimodel = $name.'\\'.'ApiModel';
+		$model = new $apimodel('Api', GROUP_NAME);
 	} else {
 		return false;
 	}
@@ -426,6 +427,8 @@ function M($name='', $tablePrefix='',$connection='') {
  * @param boolean $common 是否公共目录
  * @return Action|false
  */
+ 
+ // TODO: 如果要考虑应用独立，是否修改A方法，判断调用权限
 function A($name,$layer='',$common=false) {
     static $_action = array();
     $layer      =   $layer?$layer:C('DEFAULT_C_LAYER');
@@ -437,7 +440,7 @@ function A($name,$layer='',$common=false) {
     if(isset($_action[$name]))  return $_action[$name];
     $path           =   explode('/',$name);
 	
-    if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组		// !! mos - 跨组调用，不用，换成接口
+    if(count($path)>3 && 1 == C('SYSTEM_APP_MODE')) { // 独立分组
         $baseUrl    =   $path[0]== '@' ? dirname(APP_BASE_PATH) : SYSTEM_PATH.'../'.$path[0].'/'.C('SYSTEM_APP_PATH').'/';
         import($path[2].'/'.$path[1].'/'.$path[3].$layer,$baseUrl);
     }elseif($common) { // 加载公共类库目录
@@ -446,7 +449,7 @@ function A($name,$layer='',$common=false) {
         import($name.$layer);
     }
     $class      =   basename($name.$layer);
-	
+
     if(class_exists($class, false)) {
         $action             =   new $class();
         $_action[$name]     =   $action;        return $action;
